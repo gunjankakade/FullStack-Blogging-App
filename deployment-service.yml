@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: bloggingapp
-          image: adijaiswal/bloggingapp:latest # Updated image to private DockerHub image
+          image: 009160062663.dkr.ecr.us-east-1.amazonaws.com/boardgame-repo # Updated image to private DockerHub image
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
