@@ -1,7 +1,70 @@
+# ServiceAccount Manifest
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins
+  namespace: webapps
+---
+# Role Manifest
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: app-role
+  namespace: webapps
+rules:
+  - apiGroups:
+      - ""
+      - apps
+      - autoscaling
+      - batch
+      - extensions
+      - policy
+      - rbac.authorization.k8s.io
+    resources:
+      - pods
+      - secrets
+      - componentstatuses
+      - configmaps
+      - daemonsets
+      - deployments
+      - events
+      - endpoints
+      - horizontalpodautoscalers
+      - ingress
+      - jobs
+      - limitranges
+      - namespaces
+      - nodes
+      - persistentvolumes
+      - persistentvolumeclaims
+      - resourcequotas
+      - replicasets
+      - replicationcontrollers
+      - serviceaccounts
+      - services
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+# RoleBinding Manifest
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: app-rolebinding
+  namespace: webapps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: app-role
+subjects:
+  - namespace: webapps
+    kind: ServiceAccount
+    name: jenkins
+---
+# Deployment and Service Manifest
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bloggingapp-deployment
+  namespace: webapps
 spec:
   selector:
     matchLabels:
@@ -12,24 +75,26 @@ spec:
       labels:
         app: bloggingapp
     spec:
+      serviceAccountName: jenkins
       containers:
         - name: bloggingapp
-          image: 009160062663.dkr.ecr.us-east-1.amazonaws.com/boardgame-repo # Updated image to private DockerHub image
+          image: 009160062663.dkr.ecr.us-east-1.amazonaws.com/boardgame-repo
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
       imagePullSecrets:
-        - name: regcred # Reference to the Docker registry secret
+        - name: regcred
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: bloggingapp-ssvc
+  namespace: webapps
 spec:
   selector:
     app: bloggingapp
   ports:
     - protocol: "TCP"
       port: 80
-      targetPort: 8080 
+      targetPort: 8080
   type: LoadBalancer
